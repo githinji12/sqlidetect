@@ -3,9 +3,10 @@ from utils.pdf_generator import generate_pdf_report
 import requests
 import sqlite3
 import datetime
+import os
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
+app.secret_key = os.environ.get('SECRET_KEY', '51689a99b9c591b6e2eaf45b33e319252fab06fd7bd11841c7db64b5021948b4')
 
 # --- DB INIT ---
 def init_db():
@@ -24,7 +25,6 @@ def init_db():
         username TEXT,
         password TEXT
     )''')
-    # Add default admin if not exists
     c.execute("SELECT * FROM users WHERE username='admin'")
     if not c.fetchone():
         c.execute("INSERT INTO users (username, password) VALUES (?, ?)", ('admin', 'admin123'))
@@ -57,7 +57,6 @@ def scan():
     method = request.form.get('method', 'GET')
     payload, result = is_vulnerable(url)
 
-    # Save to database
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     conn = sqlite3.connect("scans.db")
     c = conn.cursor()
@@ -66,7 +65,6 @@ def scan():
     conn.commit()
     conn.close()
 
-    # Generate PDF
     scan_data = {
         'url': url,
         'method': method,
@@ -95,14 +93,14 @@ def login():
         u = request.form['username']
         p = request.form['password']
         if u != 'admin':
-            return render_template("login.html", error="Sorry, only the admin is allowed to log in.")
+            return render_template("login.html", error="Only admin can log in.")
         
         conn = sqlite3.connect("scans.db")
         c = conn.cursor()
         c.execute("SELECT * FROM users WHERE username=? AND password=?", (u, p))
         user = c.fetchone()
         conn.close()
-        
+
         if user:
             session['logged_in'] = True
             session['user'] = u
@@ -138,11 +136,24 @@ def delete_log(id):
     conn.close()
     return redirect('/admin')
 
+
+@app.route('/test-http')
+def test_http():
+    import requests
+    try:
+        r = requests.get("https://example.com", timeout=5)
+        return f"Success! Status code: {r.status_code}"
+    except Exception as e:
+        return f"Failed: {str(e)}"
+
+
 @app.route('/toggle-theme')
 def toggle_theme():
     theme = session.get('theme', 'light')
     session['theme'] = 'dark' if theme == 'light' else 'light'
     return redirect(request.referrer or '/')
 
+# --- Run Server ---
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 10000))  # 10000 is a Render-safe default
+    app.run(host='0.0.0.0', port=port)

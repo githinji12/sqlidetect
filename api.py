@@ -6,7 +6,7 @@ import datetime
 app = Flask(__name__)
 CORS(app)
 
-app.secret_key = 'your_super_secret_key'  # Required for session
+app.secret_key = '51689a99b9c591b6e2eaf45b33e319252fab06fd7bd11841c7db64b5021948b4'  # Required for session
 
 # Simulated in-memory log storage
 logs_store = []
@@ -81,6 +81,18 @@ def delete_log(log_id):
     global logs_store
     logs_store = [log for log in logs_store if log[0] != log_id]
     return redirect(url_for('admin_panel'))
+
+
+
+
+@app.route('/test-http')
+def test_http():
+    import requests
+    try:
+        r = requests.get("https://example.com", timeout=5)
+        return f"Success! Status code: {r.status_code}"
+    except Exception as e:
+        return f"Failed: {str(e)}"
 
 # -----------------------------
 # Home Route
