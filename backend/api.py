@@ -1,26 +1,33 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session
-from scanner import scan_url
 from flask_cors import CORS
+from scanner import scan_url
 import datetime
 
 app = Flask(__name__)
-CORS(app)
 
-app.secret_key = 'your_super_secret_key'  # Required for session
+# Use your provided secret key (in production, use environment variable instead)
+app.secret_key = "51689a99b9c591b6e2eaf45b33e319252fab06fd7bd11841c7db64b5021948b4"
 
-# Simulated in-memory log storage
+# CORS setup to allow frontend hosted on Render
+CORS(app, origins=["https://sqlidetect.onrender.com"], supports_credentials=True)
+
+# In-memory log store (temporary - use DB later)
 logs_store = []
 
-# Hardcoded admin login (you can replace with DB later)
+# Admin login credentials
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "password"
 
 # -----------------------------
-# API for scanning
+# API Endpoint for SQLi Scan
 # -----------------------------
-@app.route('/api/scan', methods=['POST'])
+@app.route('/api/scan', methods=['POST', 'OPTIONS'])
 def scan():
-    data = request.json
+    # Handle preflight
+    if request.method == 'OPTIONS':
+        return '', 200
+
+    data = request.get_json()
     target_url = data.get('url')
 
     if not target_url:
@@ -30,14 +37,13 @@ def scan():
     vulnerable = len(results) > 0
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    # Save to logs_store
     log_entry = [
-        len(logs_store) + 1,      # ID
-        target_url,               # URL
-        'GET',                    # Method (for now, assume GET)
-        ', '.join(results),       # Payloads
-        'Vulnerable' if vulnerable else 'Safe',  # Result
-        timestamp                 # Time
+        len(logs_store) + 1,
+        target_url,
+        'GET',
+        ', '.join(results),
+        'Vulnerable' if vulnerable else 'Safe',
+        timestamp
     ]
     logs_store.append(log_entry)
 
@@ -47,7 +53,7 @@ def scan():
     })
 
 # -----------------------------
-# Admin Routes
+# Admin Dashboard Routes
 # -----------------------------
 @app.route('/admin')
 def admin_panel():
@@ -77,17 +83,19 @@ def logout():
 def delete_log(log_id):
     if 'username' not in session:
         return redirect(url_for('login'))
-    
     global logs_store
     logs_store = [log for log in logs_store if log[0] != log_id]
     return redirect(url_for('admin_panel'))
 
 # -----------------------------
-# Home Route
+# Optional Home Page
 # -----------------------------
 @app.route('/')
 def home():
-    return render_template('index.html')  # Optional landing page
+    return render_template('index.html')
 
+# -----------------------------
+# Run Local Dev Server
+# -----------------------------
 if __name__ == '__main__':
     app.run(debug=True)
