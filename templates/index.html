@@ -117,7 +117,6 @@
   <script>
     // Theme toggle logic
     const toggleBtn = document.getElementById('toggle-theme-btn');
-
     const savedTheme = localStorage.getItem('theme') || 'light';
     if (savedTheme === 'dark') {
       document.body.classList.add('dark-theme');
@@ -125,11 +124,7 @@
 
     toggleBtn.addEventListener('click', () => {
       document.body.classList.toggle('dark-theme');
-      if (document.body.classList.contains('dark-theme')) {
-        localStorage.setItem('theme', 'dark');
-      } else {
-        localStorage.setItem('theme', 'light');
-      }
+      localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
     });
 
     // Scan form logic
@@ -145,13 +140,14 @@
       scanBtn.disabled = true;
 
       const url = document.getElementById('url-input').value;
+      const apiBase = window.location.hostname.includes('localhost')
+        ? 'http://localhost:5000'
+        : 'https://sqlidetect-backend.onrender.com';
 
       try {
-        const response = await fetch('http://localhost:5000/api/scan', {
+        const response = await fetch(`${apiBase}/api/scan`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url }),
         });
 
