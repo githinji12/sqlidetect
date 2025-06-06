@@ -7,7 +7,7 @@ import datetime
 import os
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', '51689a99b9c591b6e2eaf45b33e319252fab06fd7bd11841c7db64b5021948b4')
+app.secret_key = os.environ.get('51689a99b9c591b6e2eaf45b33e319252fab06fd7bd11841c7db64b5021948b4')
 
 # ✅ Allow only your frontend origin
 CORS(app, origins=["https://sqlidetect.onrender.com"], supports_credentials=True)
