@@ -7,7 +7,7 @@ app = Flask(__name__)
 app.secret_key = "51689a99b9c591b6e2eaf45b33e319252fab06fd7bd11841c7db64b5021948b4"
 
 # Proper CORS config to allow frontend origin
-CORS(app, origins=["https://sqlidetect.onrender.com"], supports_credentials=True)
+CORS(app, resources={r"/api/*": {"origins": "https://sqlidetect.onrender.com"}})
 
 # In-memory storage for logs
 logs_store = []
