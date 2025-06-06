@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, session
 from utils.pdf_generator import generate_pdf_report
+from flask_cors import CORS  # ✅ Add this
 import requests
 import sqlite3
 import datetime
@@ -7,6 +8,9 @@ import os
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', '51689a99b9c591b6e2eaf45b33e319252fab06fd7bd11841c7db64b5021948b4')
+
+# ✅ Allow only your frontend origin
+CORS(app, origins=["https://sqlidetect.onrender.com"], supports_credentials=True)
 
 # --- DB INIT ---
 def init_db():
@@ -136,7 +140,6 @@ def delete_log(id):
     conn.close()
     return redirect('/admin')
 
-
 @app.route('/test-http')
 def test_http():
     import requests
@@ -145,7 +148,6 @@ def test_http():
         return f"Success! Status code: {r.status_code}"
     except Exception as e:
         return f"Failed: {str(e)}"
-
 
 @app.route('/toggle-theme')
 def toggle_theme():
