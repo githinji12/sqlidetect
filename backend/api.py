@@ -4,32 +4,22 @@ from scanner import scan_url
 import datetime
 
 app = Flask(__name__)
-
-# Use your provided secret key (in production, use environment variable instead)
 app.secret_key = "51689a99b9c591b6e2eaf45b33e319252fab06fd7bd11841c7db64b5021948b4"
 
-# CORS setup to allow frontend hosted on Render
+# Proper CORS config to allow frontend origin
 CORS(app, origins=["https://sqlidetect.onrender.com"], supports_credentials=True)
 
-# In-memory log store (temporary - use DB later)
+# In-memory storage for logs
 logs_store = []
 
-# Admin login credentials
+# Admin login
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "password"
 
-# -----------------------------
-# API Endpoint for SQLi Scan
-# -----------------------------
-@app.route('/api/scan', methods=['POST', 'OPTIONS'])
+@app.route('/api/scan', methods=['POST'])
 def scan():
-    # Handle preflight
-    if request.method == 'OPTIONS':
-        return '', 200
-
     data = request.get_json()
     target_url = data.get('url')
-
     if not target_url:
         return jsonify({'error': 'No URL provided'}), 400
 
@@ -47,14 +37,8 @@ def scan():
     ]
     logs_store.append(log_entry)
 
-    return jsonify({
-        'vulnerable': vulnerable,
-        'details': results
-    })
+    return jsonify({'vulnerable': vulnerable, 'details': results})
 
-# -----------------------------
-# Admin Dashboard Routes
-# -----------------------------
 @app.route('/admin')
 def admin_panel():
     if 'username' not in session:
@@ -87,15 +71,8 @@ def delete_log(log_id):
     logs_store = [log for log in logs_store if log[0] != log_id]
     return redirect(url_for('admin_panel'))
 
-# -----------------------------
-# Optional Home Page
-# -----------------------------
 @app.route('/')
 def home():
     return render_template('index.html')
 
-# -----------------------------
-# Run Local Dev Server
-# -----------------------------
-if __name__ == '__main__':
-    app.run(debug=True)
+# DO NOT use app.run() in production
